@@ -41,15 +41,21 @@ function useSearch() {
 }
 
 function App() {
+  const [sort, setSort] = useState(false)
 
   const {search, updateSearch, error} = useSearch()
-  const {movies: mappedMovies, getMovies} = useMovies({search})
+  const {movies: mappedMovies, loading, getMovies} = useMovies({search, sort})
   //const inputRef = useRef() //RECOMENDACION; Intentar no abusar de las referencias
 
-  const handleSubmit = (event) => {
+     const handleSubmit = (event) => {
       event.preventDefault()
       //En este punto, se pueden meter condiciones; si la query es vacia, entonces tal...
       getMovies()
+    }
+
+
+    const handleSort = () => {
+      setSort(!sort)
     }
 
     const handleChange = (event) => {
@@ -75,13 +81,16 @@ function App() {
             placeholder='Avengers, 
             simpsons...' 
             />
+            <input type='checkbox' onChange={handleSort} checked={sort} />
           <button type='submit'>Search</button>
         </form>
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </header>
 
       <main>
-        <Movies movies={mappedMovies}/>
+        {
+          loading ? <p>Cargando . . .</p> : <Movies movies={mappedMovies}/>
+        }
       </main>
     </div>
   )

@@ -1,38 +1,37 @@
-import withResults from '../mocks/with-results.json'
-import withoutMovies from '../mocks/no-results.json'
+import { useRef } from 'react'
 import { useState } from 'react'
+import { searchMovies } from '../services/movies'
 
-export function useMovies ({search}) {
-    const [responseMovies, setResponseMovies] = useState([])
+export function useMovies ({search, sort}) {
+    const [movies, setMovies] = useState([])
+    const [loading, setLoading] = useState([false])
+    const [error, setError] = useState(null)
+    //Ahora, vamos a usar useRef() para guardar la busqueda anterior
+    const previousSearch = useRef(search)
 
-
-    const movies = responseMovies.Search
-  
-    //Vamos a mapear los datos de las movies, para evitar que un componente muy profundo
-    //utilice la API;
-    //De este modo, si cambiamos de API, solamente lo tendremos que cambiar en un solo sitio
-    const mappedMovies = movies?.map(movie => ({
-      id: movie.imdbID,
-      title: movie.Title,
-      year: movie.Year,
-      poster: movie.Poster
-    }))
-
-    //Ahora, para hacerlo bien, en vez de usar el withresults o el withoutmovies, vamos a añadir
-    //la URL de la API con la que estamos trabajando
-    const getMovies = () => {
-      if (search) {
-        //setResponseMovies(withResults)
-        fetch(`https://www.omdbapi.com/?apikey=4287ad07&s=${search}`)
-          .then(res => res.json())
-          .then(json => {
-            setResponseMovies(json)
-           })
-      } else {
-        //setResponseMovies(withoutMovies)
+    const getMovies = async () => {
+      if (search === previousSearch.current) return
+      
+      try {
+        setLoading(true)
+        setError(null)
+        previousSearch.current = search 
+        const newMovies = await searchMovies( { search } )
+        setMovies(newMovies)
+      }catch (e) {
+        setError(e.message)
+      } finally {
+        //El finally se va a ejecutar, tanto si se cumple el try, como si se cumple el
+        //catch simultaneamente; tambien se podria dejar metido la linea de setLoading(false)
+        //dentro del catch, pero aqui si tendria sentido dejarlo metido dentro del finally
+        setLoading(false)
       }
     }
   
-    return { movies: mappedMovies, getMovies }
+    //CheckBox que las ordene por titulo
+    /*const sortedMovies = sort
+      ? [...movies].sort(a, b) => a.title.locale*/
+
+    return { movies, getMovies, loading }
   }
   
