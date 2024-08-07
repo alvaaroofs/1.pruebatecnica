@@ -1,10 +1,10 @@
 export function ListOfMovies ({ movies }) {
     //<ul> para tener una lista desordenada
     return (
-            <ul>
+            <ul className='movies'>
               {
                 movies.map(movie => (
-                  <li key={movie.imdbID}>
+                  <li className='movie' key={movie.imdbID}>
                     <h3>{movie.title}</h3>
                     <p>{movie.year}</p>
                     <img src={movie.poster} alt={movie.title} />

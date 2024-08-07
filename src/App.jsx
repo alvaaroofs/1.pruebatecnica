@@ -5,15 +5,21 @@ import './App.css'
 //import { useRef } from 'react'
 import { useMovies } from './hooks/useMovies'
 import { Movies } from './components/Movies'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 //Custom hook = extraer logica de los componentes
 function useSearch() {
   const [search, updateSearch] = useState('')
   const [error, setError] = useState(null)
+  const isFirstInput = useRef(true)
 
   useEffect(() => {
-    if (search == '') {
+    if (isFirstInput.current) {
+      isFirstInput.current = search === ''
+      return
+    }
+
+    if (search === '') {
       setError('No se puede buscar una pelicula vacia')
       return
     }
@@ -36,14 +42,14 @@ function useSearch() {
 
 function App() {
 
-  const {movies: mappedMovies} = useMovies()
+  const {search, updateSearch, error} = useSearch()
+  const {movies: mappedMovies, getMovies} = useMovies({search})
   //const inputRef = useRef() //RECOMENDACION; Intentar no abusar de las referencias
-  const [search, updateSearch, error] = useSearch()
 
   const handleSubmit = (event) => {
       event.preventDefault()
       //En este punto, se pueden meter condiciones; si la query es vacia, entonces tal...
-      console.log({ search })
+      getMovies()
     }
 
     const handleChange = (event) => {
@@ -57,13 +63,18 @@ function App() {
 
       <header>
         <h1>Buscador de peliculas</h1>
-        <form className='form>' onSubmit={handleSubmit}>
+        <form className='form' onSubmit={handleSubmit}>
           <input 
             style={{
               border: '1px solid transparent',
               borderColor: error ? 'red' : 'transparent'
-            }} onChange={handleChange} value={search} name='query' placeholder='Avengers, 
-            simpsons...' />
+            }} 
+            onChange={handleChange} 
+            value={search} 
+            name='query' 
+            placeholder='Avengers, 
+            simpsons...' 
+            />
           <button type='submit'>Search</button>
         </form>
         {error && <p style={{ color: 'red' }}>{error}</p>}
