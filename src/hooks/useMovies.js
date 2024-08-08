@@ -1,6 +1,9 @@
-import { useRef } from 'react'
-import { useState } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { searchMovies } from '../services/movies'
+
+//useCallback es lo mismo que el useMemo, pero pensado para una funcion
+//Con useCallback acortaremos mas codigo que con useMemo, pero viene a ser lo mismo
+//ya que useCallback utiliza useMemo por debajo
 
 export function useMovies ({search, sort}) {
     const [movies, setMovies] = useState([])
@@ -9,7 +12,9 @@ export function useMovies ({search, sort}) {
     //Ahora, vamos a usar useRef() para guardar la busqueda anterior
     const previousSearch = useRef(search)
 
-    const getMovies = async () => {
+    //Para evitar que el getMovies se este continuamente creando y destruyendo:
+    //
+    const getMovies = useCallback(async ({ search }) => { //Le pasamos el search como parametro
       if (search === previousSearch.current) return
       
       try {
@@ -26,12 +31,34 @@ export function useMovies ({search, sort}) {
         //dentro del catch, pero aqui si tendria sentido dejarlo metido dentro del finally
         setLoading(false)
       }
-    }
+  }, []) //cada vez que cambia el search, se ejecutara la funcion de getMovies
   
+    /*const getSortedMovies = () => {
     //CheckBox que las ordene por titulo
-    /*const sortedMovies = sort
-      ? [...movies].sort(a, b) => a.title.locale*/
+    console.log('getSortedMovies')
+    const sortedMovies = sort
+      ? [...movies].sort((a, b) => a.title.localeCompare(b.title))
+      : movies
 
-    return { movies, getMovies, loading }
+      return sortedMovies
+    }*/
+
+
+  //Con esta logica siguiente, hasta que no se le da a search, no renderiza nada;
+  //useMemo() en este caso, es para poder memorizar computaciones que hemos hecho que queremos evitar que se hagan
+  //a no ser que se cambien las dependencias que nosotros le hemos dado
+
+
+  //useMemo no solo funciona con computaciones, tambien con funciones
+    const sortedMovies = useMemo(() => {
+        //console.log('memoSortedMovies')
+
+        return sort
+        ? [...movies].sort((a, b) => a.title.localeCompare(b.title))
+         : movies
+      }, [sort, movies])
+    
+
+    return { movies: sortedMovies, getMovies, loading }
   }
   

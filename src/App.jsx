@@ -5,7 +5,11 @@ import './App.css'
 //import { useRef } from 'react'
 import { useMovies } from './hooks/useMovies'
 import { Movies } from './components/Movies'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+
+import debounce from 'just-debounce-it' //Hemos instalado npm install just-debounce-it -E 
+//Vamos a hacer un debounce del getMovies en handleChange; queremos evitar que se haga la busqueda
+//hasta que sea necesario; creamos la funcion debounceGetMovies para usarla en el handleChange
 
 //Custom hook = extraer logica de los componentes
 function useSearch() {
@@ -47,10 +51,18 @@ function App() {
   const {movies: mappedMovies, loading, getMovies} = useMovies({search, sort})
   //const inputRef = useRef() //RECOMENDACION; Intentar no abusar de las referencias
 
+    const debounceGetMovies = useCallback(
+    debounce(search => {
+      console.log('search', search)
+      getMovies({ search })
+    }, 300) //Milisegundos que queremos que tarde en cargar la info;
+    , []
+    )
+
      const handleSubmit = (event) => {
       event.preventDefault()
       //En este punto, se pueden meter condiciones; si la query es vacia, entonces tal...
-      getMovies()
+      getMovies({ search })
     }
 
 
@@ -60,8 +72,15 @@ function App() {
 
     const handleChange = (event) => {
       //De este modo, usando newQuery, nos aseguramos que utilizamos siempre la ultima
+      const newSearch = event.target.value
       updateSearch(event.target.value)
+      debounceGetMovies(newSearch)
+      //Asi, cada vez que hay un cambio en el input, hara la busqueda de forma automatica
     }
+
+    useEffect(() => {
+      console.log('new getMovies received')
+    }, [getMovies]) //cada vez que se escribe en el search, se crea una funcion que queda logeada en el console log
  
 
   return (
